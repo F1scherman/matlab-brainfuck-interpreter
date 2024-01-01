@@ -1,12 +1,17 @@
 % Brayden Jonsson, January 2024
 function exitcode = brainfuck_interpreter(filename)
 fileID = fopen(filename, 'r');
-instructions = fscanf(fileID, '%c');
 
+% All data itmems
 array = zeros(1,30000);
 dataPointer = 1;
+
+% All instruction items
 instructionPointer = 1;
+instructions = fscanf(fileID, '%c');
 instructionCount = size(instructions, 2);
+
+% Handles loops
 loopStarts = zeros(1,30000);
 currentLoop = 0;
 
@@ -44,6 +49,8 @@ while instructionPointer <= instructionCount
             instructionPointer = instructionPointer + 1;
         case '['
             if array(dataPointer) == 0
+                % openBracketCounter handles the case if there are more
+                % loops within the loop we are skipping.
                 openBracketCounter = 0;
                 instructionPointer = instructionPointer + 1;
                 while instructionPointer <= instructionCount
@@ -61,6 +68,7 @@ while instructionPointer <= instructionCount
                     exitcode = -2;
                     return
                 end
+                % Required so we don't repeat logic for nested loops
                 instructionPointer = instructionPointer + 1;
             else
                 currentLoop = currentLoop + 1;
@@ -81,6 +89,7 @@ while instructionPointer <= instructionCount
                 instructionPointer = loopStart;
             end
         otherwise
+            % Any non-valid character is by-convention a comment
             instructionPointer = instructionPointer + 1;
     end
 end
@@ -90,4 +99,5 @@ if currentLoop ~= 0
     return
 end
 exitcode = 0;
+fclose(fileID);
 end
