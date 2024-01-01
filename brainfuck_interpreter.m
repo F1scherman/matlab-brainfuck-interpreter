@@ -7,7 +7,8 @@ array = zeros(1,30000);
 dataPointer = 1;
 instructionPointer = 1;
 instructionCount = size(instructions, 2);
-loopStart = -1;
+loopStarts = zeros(1,30000);
+currentLoop = 0;
 
 while instructionPointer <= instructionCount
     switch instructions(instructionPointer)
@@ -43,29 +44,38 @@ while instructionPointer <= instructionCount
             instructionPointer = instructionPointer + 1;
         case '['
             if array(dataPointer) == 0
+                openBracketCounter = 0;
+                instructionPointer = instructionPointer + 1;
                 while instructionPointer <= instructionCount
-                    if instructions(instructionPointer) == ']'
+                    if openBracketCounter == 0 && instructions(instructionPointer) == ']'
                         break;
+                    elseif instructions(instructionPointer) == ']'
+                        openBracketCounter = openBracketCounter - 1;
+                    elseif instructions(instructionPointer) == '['
+                        openBracketCounter = openBracketCounter + 1;
                     end
                     instructionPointer = instructionPointer + 1;
                 end
-                if instructions(instructionPointer) ~= ']'
+                if instructions(instructionPointer) ~= ']' || openBracketCounter ~= 0
                     fprintf("Missing closing loop bracket!")
                     exitcode = -2;
                     return
                 end
+                instructionPointer = instructionPointer + 1;
             else
-                loopStart = instructionPointer;
+                currentLoop = currentLoop + 1;
+                loopStarts(currentLoop) = instructionPointer;
                 instructionPointer = instructionPointer + 1;
             end
         case ']'
-            if loopStart == -1
+            if currentLoop == 0
                 fprintf("Missing opening loop bracket!")
                 exitcode = -3;
                 return
             end
+            loopStart = loopStarts(currentLoop);
+            currentLoop = currentLoop - 1;
             if array(dataPointer) == 0
-                loopStart = -1;
                 instructionPointer = instructionPointer + 1;
             else
                 instructionPointer = loopStart;
@@ -74,9 +84,9 @@ while instructionPointer <= instructionCount
             instructionPointer = instructionPointer + 1;
     end
 end
-if loopStart ~= -1
+if currentLoop ~= 0
     fprintf("Missing closing loop bracket!")
-    exitcode = -1;
+    exitcode = -2;
     return
 end
 exitcode = 0;
